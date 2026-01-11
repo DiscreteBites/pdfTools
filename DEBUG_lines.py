@@ -70,21 +70,18 @@ def merge_y_overlaps(lines: List[Line], joins: List[Line] = [], tol: float = 0.4
                     join_regions.append([y0, y1])
                 elif join_regions[-1][1] < y1:
                     join_regions[-1][1] = y1
-                    
+
         merged_glyphs.append((active_top, active_bot))
         glyph_cursor = merge_cursor
 
     return merged_glyphs
 
-input_pdf = r"C:\Users\marcu\Dropbox\Marcus\study\Cambridge\II\General Relativity\General Relativity - Sperhake.pdf"
+input_pdf = r"C:\Users\marcu\Dropbox\Marcus\study\Cambridge\II\Kobo Lecture notes\Classical Dynamics - Tong.pdf"
 output_pdf = "debug_lines.pdf"
 
 doc = fitz.open(input_pdf)
 
 for page in doc:
-
-    if page.number != 32:
-        continue
     
     # Extract Drawings
     drawings = page.get_drawings()
