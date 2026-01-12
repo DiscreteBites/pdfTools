@@ -76,8 +76,8 @@ def merge_y_overlaps(lines: List[Line], joins: List[Line] = [], tol: float = 0.4
 
     return merged_glyphs
 
-input_pdf = r"C:\Users\marcu\Dropbox\Marcus\study\Cambridge\II\Kobo Lecture notes\Classical Dynamics - Tong.pdf"
-output_pdf = "debug_lines.pdf"
+input_pdf = r"C:\Users\marcu\Dropbox\Marcus\study\Cambridge\II\Asymptotic Methods\Asymptotics book clive_single_paged.pdf"
+output_pdf = "asymp_debug_lines.pdf"
 
 doc = fitz.open(input_pdf)
 
