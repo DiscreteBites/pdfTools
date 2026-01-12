@@ -1,8 +1,54 @@
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, cast
 
 import fitz  # PyMuPDF
+from fitz import Page, Rect
 
 Line = Tuple[float, float]
+
+HORIZONTAL_PADDING: float = 6.0         # pts
+VERTICAL_PADDING: float = 6.0           # pts
+
+def get_content_rect(page: Page) -> Rect:
+    """Find content bounds."""
+    rect = page.rect
+    rects: List[Rect] = []
+
+    # text blocks
+    for b in page.get_text("blocks"):
+        rects.append(Rect(b[:4]))
+    
+    # drawings (vector graphics, lines, borders, etc.)
+    for d in page.get_drawings():
+        r = d.get("rect")
+        if r is not None:
+            rects.append(r)
+
+
+    # include images
+    for img in page.get_images(full=True):
+        name = img[7]
+        try:
+            img_rect = cast(Rect, page.get_image_bbox(name))
+            rects.append(img_rect)
+        except ValueError:
+            # image might not actually be placed on this page
+            pass
+
+    if not rects:
+        return rect
+
+    # Create Union of all content rects
+    content_rect = rects[0]
+    for r in rects[1:]:
+        content_rect |= r
+    
+    # Create a new rect with the cropped distances
+    return Rect(
+        max(rect.x0, content_rect.x0 - HORIZONTAL_PADDING),
+        max(rect.y0, content_rect.y0 - VERTICAL_PADDING),
+        min(rect.x1, content_rect.x1 + HORIZONTAL_PADDING),
+        min(rect.y1, content_rect.y1 + VERTICAL_PADDING)
+    )
 
 def overlaps(a0: float, a1: float, b0: float, b1: float) -> float:
     return min(a1, b1) - max(a0, b0)
@@ -76,13 +122,15 @@ def merge_y_overlaps(lines: List[Line], joins: List[Line] = [], tol: float = 0.4
 
     return merged_glyphs
 
-input_pdf = r"C:\Users\marcu\Dropbox\Marcus\study\Cambridge\II\Asymptotic Methods\Asymptotics book clive_single_paged.pdf"
-output_pdf = "asymp_debug_lines.pdf"
+input_pdf = r"C:\Users\marcu\Dropbox\Marcus\study\Cambridge\II\Electrodynamics\Electrodynamics - Challinor_wtoc.pdf"
+output_pdf = "electro_debug_lines.pdf"
 
 doc = fitz.open(input_pdf)
 
 for page in doc:
-    
+
+    content_rect = get_content_rect(page)
+
     # Extract Drawings
     drawings = page.get_drawings()
     # Extract structured text
@@ -91,6 +139,12 @@ for page in doc:
     rects = []
     lines: List[Line] = []
     joins: List[Line] = []
+
+    page.draw_rect(
+        content_rect,
+        color=(0.5, 0.5, 0.5), # mid grey
+        width=0.5
+    )    
 
     for d in drawings:
         pad = 3
